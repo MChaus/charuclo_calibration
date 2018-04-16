@@ -10,17 +10,15 @@ from calibration import Calibration
 from charuco_calibration import Charuco_calibration
 
 if __name__ == '__main__':
-    cam_calibration = Calibration(board_shape=(9, 6), path_to_dataset='./dataset')
-    cam_calibration.load_metadata()
     cam_ch_calibr = Charuco_calibration(
             squaresX=5,
             squaresY=7,
-            squareLength=0.0725,
-            markerLength=0.0425,
-            camera_matrix=cam_calibration.matrix,
-            dist_coeff=cam_calibration.distortion
+            square_length=0.0725,
+            marker_length=0.0425,
             )
-    
-    
-    cam_ch_calibr.calibrate()
-    
+    cam_ch_calibr.live_calibration()
+    print(cam_ch_calibr)
+    cam_ch_calibr.dump_data('dump.yaml')
+    cam_ch_calibr_2 = Charuco_calibration()
+    cam_ch_calibr_2.load_data('dump.yaml')
+    print(cam_ch_calibr_2)
