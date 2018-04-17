@@ -5,6 +5,7 @@ Charuco calibration
 import cv2
 import numpy as np
 import yaml
+import os
 
 class Charuco_calibration:
     def __init__(self, **kwargs):
@@ -17,7 +18,7 @@ class Charuco_calibration:
                 "dist_coeff",
                 "rvecs",
                 "tvecs",
-                "frame_shape"
+                "image_size"
                 ]
         for key in valid_keys:
             self.__dict__[key] = kwargs.get(key)
@@ -56,8 +57,8 @@ class Charuco_calibration:
                 "rvecs type:\n{}\n" +
                 "tvecs :\n{}\n" +
                 "tvecs type:\n{}\n" +
-                "frame_shape :\n{}\n" +
-                "frame_shape type:\n{}\n"
+                "image_size :\n{}\n" +
+                "image_size type:\n{}\n"
                 ).format(
                     self.squaresX,
                     type(self.squaresX),
@@ -75,8 +76,8 @@ class Charuco_calibration:
                     type(self.rvecs),
                     self.tvecs,
                     type(self.tvecs),
-                    self.frame_shape,
-                    type(self.frame_shape)
+                    self.image_size,
+                    type(self.image_size)
                         )
         return message
 
@@ -91,17 +92,58 @@ class Charuco_calibration:
             )
 
 
-    def live_calibration(self):
+    def remote_calibration(self, path_to_data=None, show=False):
+        for filename in listdir(dataset_path):
+            image_path = path.join(dataset_path, filename)
+            if (
+                    path.isfile(image_path) and
+                    (
+                        image_path.endswith('.png') or
+                        image_path.endswith('.jpg')
+                        )
+                ):
+                image = cv2.imread(image_path)
+                self.get_markers(image, show)
+        self.calibrate()
+
+
+    def live_axis(self):
         capture = cv2.VideoCapture(cv2.CAP_ANY)
         if capture.isOpened():
             retval, frame = capture.read()
-            self.frame_shape = frame.shape[0:2]
+            self.image_size = frame.shape[0:2]
+        while capture.isOpened():
+            retval, frame = capture.read()
+            self.get_markers(frame, show=False)
+            if self.all_corners != [] and self.all_ids != []:
+                self.calibrate()
+                self.draw_axis(frame)
+            self.all_corners = []
+            self.all_ids = []
+            cv2.imshow("camera", frame)
+            # if ESC was pressed
+            # close all windows
+            if cv2.waitKey(33) % 256 == 27:
+                print('ESC pressed, closing...')
+                break
+        capture.release()
+        cv2.destroyAllWindows()
+
+
+    def live_calibration(self, write=False, write_path=None):
+        capture = cv2.VideoCapture(cv2.CAP_ANY)
+        if capture.isOpened():
+            retval, frame = capture.read()
+            self.image_size = frame.shape[0:2]
+            frame_num = 0
         while capture.isOpened():
             retval, frame = capture.read()
             # if SPACE was pressed
             # take frame and get markers from it
             if cv2.waitKey(33) % 256 == 32:
+                frame_num += 1
                 self.get_markers(frame, show=True)
+                self.write_image(frame, frame_num, write_path, write)
             # if ENTER was pressed
             # calibrate camera using Charuco_calibration
             elif cv2.waitKey(33) % 256 == 13:
@@ -117,6 +159,14 @@ class Charuco_calibration:
         cv2.destroyAllWindows()
 
 
+    def write_image(self, frame, frame_num, write_path=None, write=True):
+        if write and write_path is not None:
+            cv2.imwrite(
+                os.path.join(write_path, 'image_{}.png'.format(frame_num)),
+                frame
+                )
+
+
     def draw_axis(self, frame):
         axis_frame = np.copy(frame)
         cv2.aruco.drawAxis(
@@ -127,6 +177,7 @@ class Charuco_calibration:
             self.tvecs[0],
             length=0.1
             )
+
         cv2.imshow("Axis", axis_frame)
 
 
@@ -158,7 +209,7 @@ class Charuco_calibration:
                 'squaresY' : self.squaresY,
                 'square_length' : self.square_length,
                 'marker_length' : self.marker_length,
-                'size' : np.asarray(self.frame_shape).tolist(),
+                'size' : np.asarray(self.image_size).tolist(),
                 'camera_matrix' : np.asarray(self.camera_matrix).tolist(),
                 'distortion_coefficient' : np.asarray(self.dist_coeff).tolist(),
                 'rotation_vector' : np.asarray(self.rvecs).tolist(),
@@ -179,7 +230,7 @@ class Charuco_calibration:
                 self.all_corners,
                 self.all_ids,
                 self.board,
-                self.frame_shape,
+                self.image_size,
                 None,
                 None
                 )

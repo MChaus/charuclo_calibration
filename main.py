@@ -14,11 +14,12 @@ if __name__ == '__main__':
             squaresX=5,
             squaresY=7,
             square_length=0.0725,
-            marker_length=0.0425,
+            marker_length=0.0435,
             )
-    cam_ch_calibr.live_calibration()
-    print(cam_ch_calibr)
-    cam_ch_calibr.dump_data('dump.yaml')
-    cam_ch_calibr_2 = Charuco_calibration()
-    cam_ch_calibr_2.load_data('dump.yaml')
-    print(cam_ch_calibr_2)
+    cam_ch_calibr.live_axis()
+    # cam_ch_calibr.live_calibration()
+    # print(cam_ch_calibr)
+    # cam_ch_calibr.dump_data('dump.yaml')
+    # cam_ch_calibr_2 = Charuco_calibration()
+    # cam_ch_calibr_2.load_data('dump.yaml')
+    # print(cam_ch_calibr_2)
