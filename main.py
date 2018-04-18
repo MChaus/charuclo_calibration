@@ -16,7 +16,12 @@ if __name__ == '__main__':
             square_length=0.0725,
             marker_length=0.0435,
             )
-    cam_ch_calibr.live_axis()
+    cam_ch_calibr.load_data('dump.yaml')
+    print(cam_ch_calibr.camera_matrix)
+    print(cam_ch_calibr.dist_coeff)
+    cam_ch_calibr.calibrate_from_video()
+    # cam_ch_calibr.calibrate_from_video()#'/home/mchaus/Videos/Webcam/2018-04-18-131732.webm')
+    # cam_ch_calibr.calibrate_from_video()
     # cam_ch_calibr.live_calibration()
     # print(cam_ch_calibr)
     # cam_ch_calibr.dump_data('dump.yaml')

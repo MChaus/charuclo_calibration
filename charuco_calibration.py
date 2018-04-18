@@ -8,18 +8,17 @@ import yaml
 import os
 
 class Charuco_calibration:
-    def __init__(
-        self,
-        squaresX=None,
-        squaresY=None,
-        square_length=None,
-        marker_length=None,
-        camera_matrix=None,
-        dist_coeff=None,
-        rvecs=None,
-        tvecs=None,
-        image_size=None
-        ):
+    def __init__(self,
+                 squaresX=None,
+                 squaresY=None,
+                 square_length=None,
+                 marker_length=None,
+                 camera_matrix=None,
+                 dist_coeff=None,
+                 rvecs=None,
+                 tvecs=None,
+                 image_size=None
+                 ):
         self.squaresX = squaresX
         self.squaresY = squaresY
         self.square_length = square_length
@@ -100,7 +99,7 @@ class Charuco_calibration:
             return None
 
 
-    def remote_calibration(self, path_to_data=None, show=False):
+    def calibrate_from_image(self, path_to_data=None, show=False):
         for filename in listdir(dataset_path):
             image_path = path.join(dataset_path, filename)
             if (
@@ -115,8 +114,8 @@ class Charuco_calibration:
         self.calibrate()
 
 
-    def live_axis(self):
-        capture = cv2.VideoCapture(cv2.CAP_ANY)
+    def calibrate_from_video(self, path_to_video=cv2.CAP_ANY):
+        capture = cv2.VideoCapture(path_to_video)
         if capture.isOpened():
             retval, frame = capture.read()
             self.image_size = frame.shape[0:2]
@@ -138,8 +137,12 @@ class Charuco_calibration:
         cv2.destroyAllWindows()
 
 
-    def live_calibration(self, write=False, write_path=None):
-        capture = cv2.VideoCapture(cv2.CAP_ANY)
+    def live_calibration(self,
+                         write=False,
+                         write_path=None,
+                         path_to_video=cv2.CAP_ANY
+                         ):
+        capture = cv2.VideoCapture(path_to_video)
         if capture.isOpened():
             retval, frame = capture.read()
             self.image_size = frame.shape[0:2]
@@ -239,8 +242,8 @@ class Charuco_calibration:
                 self.all_ids,
                 self.board,
                 self.image_size,
-                None,
-                None
+                self.camera_matrix,
+                self.dist_coeff
                 )
         if log_out:
             print('Coefficients were calculated')
