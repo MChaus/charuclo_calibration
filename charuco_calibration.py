@@ -8,32 +8,31 @@ import yaml
 import os
 
 class Charuco_calibration:
-    def __init__(self, **kwargs):
-        valid_keys = [
-                "squaresX",
-                "squaresY",
-                "square_length",
-                "marker_length",
-                "camera_matrix",
-                "dist_coeff",
-                "rvecs",
-                "tvecs",
-                "image_size"
-                ]
-        for key in valid_keys:
-            self.__dict__[key] = kwargs.get(key)
+    def __init__(
+        self,
+        squaresX=None,
+        squaresY=None,
+        square_length=None,
+        marker_length=None,
+        camera_matrix=None,
+        dist_coeff=None,
+        rvecs=None,
+        tvecs=None,
+        image_size=None
+        ):
+        self.squaresX = squaresX
+        self.squaresY = squaresY
+        self.square_length = square_length
+        self.marker_length = marker_length
+        self.camera_matrix = camera_matrix
+        self.dist_coeff = dist_coeff
+        self.rvecs = rvecs
+        self.tvecs = tvecs
+        self.image_size = image_size
         self.dictionary = cv2.aruco.getPredefinedDictionary(
                 cv2.aruco.DICT_6X6_250
                 )
-        if (
-                self.squaresX is not None and
-                self.squaresY is not None and
-                self.square_length is not None and
-                self.marker_length is not None
-            ):
-            self.board = self.create_board()
-        else:
-            self.board = None
+        self.board = self.create_board()
         self.all_corners = []
         self.all_ids = []
         self.num_frames = 0
@@ -83,13 +82,22 @@ class Charuco_calibration:
 
 
     def create_board(self):
-        return cv2.aruco.CharucoBoard_create(
-            self.squaresX,
-            self.squaresY,
-            self.square_length,
-            self.marker_length,
-            self.dictionary
-            )
+        if (
+                self.squaresX is not None and
+                self.squaresY is not None and
+                self.square_length is not None and
+                self.marker_length is not None
+            ):
+            return cv2.aruco.CharucoBoard_create(
+                self.squaresX,
+                self.squaresY,
+                self.square_length,
+                self.marker_length,
+                self.dictionary
+                )
+        else:
+            print('Board wasn\'t created')
+            return None
 
 
     def remote_calibration(self, path_to_data=None, show=False):
@@ -219,7 +227,7 @@ class Charuco_calibration:
                 yaml.dump(metadata, _file)
 
 
-    def calibrate(self):
+    def calibrate(self, log_out=False):
         (
             retval,
             self.camera_matrix,
@@ -234,10 +242,11 @@ class Charuco_calibration:
                 None,
                 None
                 )
-        print('Coefficients were calculated')
+        if log_out:
+            print('Coefficients were calculated')
 
 
-    def get_markers(self, frame, show=False):
+    def get_markers(self, frame, show=False, log_out=False):
         marked_frame = np.copy(frame)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         (
@@ -261,7 +270,8 @@ class Charuco_calibration:
                     charuco_ids is not None and
                     len(charuco_corners) > 3
                 ):
-                print('Corners were detected')
+                if log_out:
+                    print('Corners were detected')
                 self.all_corners.append(charuco_corners)
                 self.all_ids.append(charuco_ids)
                 self.num_frames += 1
@@ -288,7 +298,8 @@ class Charuco_calibration:
                         )
                     cv2.imshow('Marked frame', marked_frame)
             else:
-                print('Corners weren\'t detected')
+                if log_out:
+                    print('Corners weren\'t detected')
 
 
 if __name__ == '__main__':
