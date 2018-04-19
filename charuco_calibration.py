@@ -37,6 +37,12 @@ class Charuco_calibration:
         self.num_frames = 0
 
 
+    def draw_charuco_board(self, path=None):
+        image = self.board.draw((1000, 1500), marginSize = 100)
+        if path is not None:
+            cv2.imwrite(path, image)
+
+
     def __str__(self):
         message = (
                 "squaresX :\n{}\n" +
@@ -100,45 +106,58 @@ class Charuco_calibration:
 
 
     def calibrate_from_image(self, path_to_data=None, show=False):
-        for filename in listdir(dataset_path):
-            image_path = path.join(dataset_path, filename)
+        for filename in os.listdir(path_to_data):
+            image_path = os.path.join(path_to_data, filename)
             if (
-                    path.isfile(image_path) and
+                    os.path.isfile(image_path) and
                     (
                         image_path.endswith('.png') or
                         image_path.endswith('.jpg')
                         )
                 ):
                 image = cv2.imread(image_path)
+                self.image_size = image.shape[0:2]
                 self.get_markers(image, show)
         self.calibrate()
 
 
-    def calibrate_from_video(self, path_to_video=cv2.CAP_ANY):
+    def axis_on_video(self, path_to_video=cv2.CAP_ANY, write_path = None):
         capture = cv2.VideoCapture(path_to_video)
         if capture.isOpened():
             retval, frame = capture.read()
             self.image_size = frame.shape[0:2]
+        if write_path is not None:
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            video_out = cv2.VideoWriter(write_path, fourcc, 20.0, (640,480))
         while capture.isOpened():
             retval, frame = capture.read()
             self.get_markers(frame, show=False)
             if self.all_corners != [] and self.all_ids != []:
                 self.calibrate()
-                self.draw_axis(frame)
+                axis_frame = self.draw_axis(frame)
+            else:
+                axis_frame = frame
             self.all_corners = []
             self.all_ids = []
             cv2.imshow("camera", frame)
+            if write_path is not None:
+                video_out.write(axis_frame)
             # if ESC was pressed
             # close all windows
             if cv2.waitKey(33) % 256 == 27:
                 print('ESC pressed, closing...')
                 break
         capture.release()
+        if write_path is not None:
+            video_out.release()
+        cv2.destroyAllWindows()
+
+
+        capture.release()
         cv2.destroyAllWindows()
 
 
     def live_calibration(self,
-                         write=False,
                          write_path=None,
                          path_to_video=cv2.CAP_ANY
                          ):
@@ -154,7 +173,7 @@ class Charuco_calibration:
             if cv2.waitKey(33) % 256 == 32:
                 frame_num += 1
                 self.get_markers(frame, show=True)
-                self.write_image(frame, frame_num, write_path, write)
+                self.write_image(frame, frame_num, write_path)
             # if ENTER was pressed
             # calibrate camera using Charuco_calibration
             elif cv2.waitKey(33) % 256 == 13:
@@ -170,8 +189,8 @@ class Charuco_calibration:
         cv2.destroyAllWindows()
 
 
-    def write_image(self, frame, frame_num, write_path=None, write=True):
-        if write and write_path is not None:
+    def write_image(self, frame, frame_num, write_path=None):
+        if write_path is not None:
             cv2.imwrite(
                 os.path.join(write_path, 'image_{}.png'.format(frame_num)),
                 frame
@@ -186,10 +205,10 @@ class Charuco_calibration:
             self.dist_coeff,
             self.rvecs[0],
             self.tvecs[0],
-            length=0.1
+            length=0.05
             )
-
         cv2.imshow("Axis", axis_frame)
+        return axis_frame
 
 
     def load_data(self, path_to_data=None):

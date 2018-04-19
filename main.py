@@ -10,21 +10,21 @@ from calibration import Calibration
 from charuco_calibration import Charuco_calibration
 
 if __name__ == '__main__':
+    # cam_ch_calibr = Charuco_calibration(
+    #         squaresX=5,
+    #         squaresY=7,
+    #         square_length=0.0725,
+    #         marker_length=0.0435,
+    #         )
     cam_ch_calibr = Charuco_calibration(
             squaresX=5,
-            squaresY=7,
-            square_length=0.0725,
-            marker_length=0.0435,
+            squaresY=3,
+            square_length=0.029,
+            marker_length=0.017,
             )
-    cam_ch_calibr.load_data('dump.yaml')
-    print(cam_ch_calibr.camera_matrix)
-    print(cam_ch_calibr.dist_coeff)
-    cam_ch_calibr.calibrate_from_video()
-    # cam_ch_calibr.calibrate_from_video()#'/home/mchaus/Videos/Webcam/2018-04-18-131732.webm')
-    # cam_ch_calibr.calibrate_from_video()
-    # cam_ch_calibr.live_calibration()
-    # print(cam_ch_calibr)
-    # cam_ch_calibr.dump_data('dump.yaml')
-    # cam_ch_calibr_2 = Charuco_calibration()
-    # cam_ch_calibr_2.load_data('dump.yaml')
-    # print(cam_ch_calibr_2)
+    # cam_ch_calibr.draw_charuco_board(path='board_3.png')
+    # cam_ch_calibr.calibrate_from_image(path_to_data='/home/mchaus/projects/gaze_estimation/local_charuco_calibration/dataset')
+    # cam_ch_calibr.dump_data(path_to_data='dump.yaml')
+    # cam_ch_calibr.load_data(path_to_data='dump.yaml')
+    # cam_ch_calibr.axis_on_video(write_path = 'output2.avi')
+    cam_ch_calibr.axis_on_video()
