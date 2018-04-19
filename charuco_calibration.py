@@ -37,8 +37,11 @@ class Charuco_calibration:
         self.num_frames = 0
 
 
-    def draw_charuco_board(self, path=None):
-        image = self.board.draw((1000, 1500), marginSize = 100)
+    def draw_charuco_board(self,
+                           path=None,
+                           shape=(1080, 1920),
+                           marginSize=100):
+        image = self.board.draw(shape, marginSize = marginSize)
         if path is not None:
             cv2.imwrite(path, image)
 
