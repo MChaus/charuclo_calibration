@@ -4,7 +4,6 @@
 @author: mchaus
 """
 
-from calibration import Calibration
 from charuco_calibration import Charuco_calibration
 
 if __name__ == '__main__':
