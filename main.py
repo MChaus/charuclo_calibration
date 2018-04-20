@@ -22,10 +22,10 @@ if __name__ == '__main__':
     # Examples
 
     # Live calibration without writing
-    cam_ch_calibr.live_calibration()
+    # cam_ch_calibr.live_calibration()
 
     # Get axis from camera
-    # cam_ch_calibr.axis_on_video()
+    cam_ch_calibr.axis_on_video()
 
     # Write charuco board 6x6
     # cam_ch_calibr.draw_charuco_board(path='board_6x6.png', size=(720, 720), margin_size=0)
