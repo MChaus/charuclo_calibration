@@ -7,18 +7,23 @@
 from charuco_calibration import Charuco_calibration
 
 if __name__ == '__main__':
+    # Big board 1
     # cam_ch_calibr = Charuco_calibration(
     #         squaresX=5,
     #         squaresY=7,
     #         square_length=0.0725,
     #         marker_length=0.0435,
     #         )
-    cam_ch_calibr = Charuco_calibration(
-            squaresX=6,
-            squaresY=4,
-            square_length=0.1,
-            marker_length=0.05,
-            )
+
+    # Board 2
+    # cam_ch_calibr = Charuco_calibration(
+    #         squaresX=6,
+    #         squaresY=4,
+    #         square_length=0.1,
+    #         marker_length=0.05,
+    #         )
+
+#------------------------------------------------------------------------------
     # Examples
 
     # Live calibration without writing
@@ -28,6 +33,12 @@ if __name__ == '__main__':
     cam_ch_calibr.axis_on_video()
 
     # Write charuco board 6x6
+    # cam_ch_calibr = Charuco_calibration(
+    #         squaresX=6,
+    #         squaresY=6,
+    #         square_length=0.1,        # length in meters
+    #         marker_length=0.05,
+    #         )
     # cam_ch_calibr.draw_charuco_board(path='board_6x6.png', size=(720, 720), margin_size=0)
 
     # Calibrate from images that were saved to path

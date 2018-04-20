@@ -12,8 +12,8 @@ import os
 
 class Charuco_calibration:
     def __init__(self,
-                 squaresX=None,
-                 squaresY=None,
+                 squares_x=None,
+                 squares_y=None,
                  square_length=None,
                  marker_length=None,
                  camera_matrix=None,
@@ -22,8 +22,8 @@ class Charuco_calibration:
                  tvecs=None,
                  image_size=None
                  ):
-        self.squaresX = squaresX
-        self.squaresY = squaresY
+        self.squares_x = squares_x
+        self.squares_y = squares_y
         self.square_length = square_length
         self.marker_length = marker_length
         self.camera_matrix = camera_matrix
@@ -42,10 +42,10 @@ class Charuco_calibration:
 
     def __str__(self):
         message = (
-                'squaresX :\n{}\n'
-                'squaresX type:\n{}\n'
-                'squaresY :\n{}\n'
-                'squaresY type:\n{}\n'
+                'squares_x :\n{}\n'
+                'squares_x type:\n{}\n'
+                'squares_y :\n{}\n'
+                'squares_y type:\n{}\n'
                 'square_length :\n{}\n'
                 'square_length type:\n{}\n'
                 'marker_length :\n{}\n'
@@ -56,15 +56,15 @@ class Charuco_calibration:
                 'dist_coeff type:\n{}\n'
                 'rvecs :\n{}\n'
                 'rvecs type:\n{}\n'
-                'tvecs :\n{}\n' 
-                'tvecs type:\n{}\n' 
-                'image_size :\n{}\n' 
+                'tvecs :\n{}\n'
+                'tvecs type:\n{}\n'
+                'image_size :\n{}\n'
                 'image_size type:\n{}\n'
                 ).format(
-                    self.squaresX,
-                    type(self.squaresX),
-                    self.squaresY,
-                    type(self.squaresY),
+                    self.squares_x,
+                    type(self.squares_x),
+                    self.squares_y,
+                    type(self.squares_y),
                     self.square_length,
                     type(self.square_length),
                     self.marker_length,
@@ -88,14 +88,14 @@ class Charuco_calibration:
         Create charuco board with  established parameters
         '''
         if (
-                self.squaresX is not None and
-                self.squaresY is not None and
+                self.squares_x is not None and
+                self.squares_y is not None and
                 self.square_length is not None and
                 self.marker_length is not None
             ):
             return cv2.aruco.CharucoBoard_create(
-                self.squaresX,
-                self.squaresY,
+                self.squares_x,
+                self.squares_y,
                 self.square_length,
                 self.marker_length,
                 self.dictionary
@@ -123,8 +123,8 @@ class Charuco_calibration:
     def calibrate_from_images(self, path_to_data=None, show=False):
         '''
         Get camera parameters from already taken images, that locate in the
-        folder path_to_data. If you want see markers, pass show=True.
-        For remote calibration
+        folder path_to_data. If you want to see markers, pass show=True.
+        Use this function for remote calibration
         '''
         for filename in os.listdir(path_to_data):
             image_path = os.path.join(path_to_data, filename)
@@ -218,7 +218,7 @@ class Charuco_calibration:
 
     def _write_image(self, frame, frame_num, write_path=None):
         '''
-        Save frame to wrute_path with name image_{frame_num}.png
+        Save frame to write_path with name image_{frame_num}.png
         '''
         if write_path is not None:
             cv2.imwrite(
@@ -253,8 +253,8 @@ class Charuco_calibration:
         else:
             with open(path_to_data) as _file:
                 metadata = yaml.load(_file)
-            self.squaresX = metadata.get('squaresX')
-            self.squaresY = metadata.get('squaresY')
+            self.squares_x = metadata.get('squares_x')
+            self.squares_y = metadata.get('squares_y')
             self.square_length = metadata.get('square_length')
             self.marker_length = metadata.get('marker_length')
             self.image_size = np.array(metadata.get('size'))
@@ -274,8 +274,8 @@ class Charuco_calibration:
             print('Undefind path')
         else:
             metadata = {
-                'squaresX' : self.squaresX,
-                'squaresY' : self.squaresY,
+                'squares_x' : self.squares_x,
+                'squares_y' : self.squares_y,
                 'square_length' : self.square_length,
                 'marker_length' : self.marker_length,
                 'size' : np.asarray(self.image_size).tolist(),
