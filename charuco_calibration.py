@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+'''
 Provides methods to calibrate camera, using charuco board.
 @author: Mykhailo Chaus
-"""
+'''
 
 import cv2
 import numpy as np
@@ -42,24 +42,24 @@ class Charuco_calibration:
 
     def __str__(self):
         message = (
-                "squaresX :\n{}\n" +
-                "squaresX type:\n{}\n" +
-                "squaresY :\n{}\n" +
-                "squaresY type:\n{}\n" +
-                "square_length :\n{}\n" +
-                "square_length type:\n{}\n" +
-                "marker_length :\n{}\n" +
-                "marker_length type:\n{}\n" +
-                "camera_matrix :\n{}\n" +
-                "camera_matrix type:\n{}\n" +
-                "dist_coeff :\n{}\n" +
-                "dist_coeff type:\n{}\n" +
-                "rvecs :\n{}\n" +
-                "rvecs type:\n{}\n" +
-                "tvecs :\n{}\n" +
-                "tvecs type:\n{}\n" +
-                "image_size :\n{}\n" +
-                "image_size type:\n{}\n"
+                'squaresX :\n{}\n'
+                'squaresX type:\n{}\n'
+                'squaresY :\n{}\n'
+                'squaresY type:\n{}\n'
+                'square_length :\n{}\n'
+                'square_length type:\n{}\n'
+                'marker_length :\n{}\n'
+                'marker_length type:\n{}\n'
+                'camera_matrix :\n{}\n'
+                'camera_matrix type:\n{}\n'
+                'dist_coeff :\n{}\n'
+                'dist_coeff type:\n{}\n'
+                'rvecs :\n{}\n'
+                'rvecs type:\n{}\n'
+                'tvecs :\n{}\n' 
+                'tvecs type:\n{}\n' 
+                'image_size :\n{}\n' 
+                'image_size type:\n{}\n'
                 ).format(
                     self.squaresX,
                     type(self.squaresX),
@@ -84,9 +84,9 @@ class Charuco_calibration:
 
 
     def _create_charuco_board(self):
-        """
+        '''
         Create charuco board with  established parameters
-        """
+        '''
         if (
                 self.squaresX is not None and
                 self.squaresY is not None and
@@ -110,9 +110,9 @@ class Charuco_calibration:
                            size=(1080, 1920),
                            margin_size=100,
                            show=False):
-        """
+        '''
         Save charuco board and show its instance
-        """
+        '''
         image = self.board.draw(size, marginSize = margin_size)
         if path is not None:
             cv2.imwrite(path, image)
@@ -121,11 +121,11 @@ class Charuco_calibration:
 
 
     def calibrate_from_images(self, path_to_data=None, show=False):
-        """
+        '''
         Get camera parameters from already taken images, that locate in the
         folder path_to_data. If you want see markers, pass show=True.
         For remote calibration
-        """
+        '''
         for filename in os.listdir(path_to_data):
             image_path = os.path.join(path_to_data, filename)
             if (
@@ -142,9 +142,9 @@ class Charuco_calibration:
 
 
     def axis_on_video(self, path_to_video=cv2.CAP_ANY, write_path = None):
-        """
+        '''
         Draw axis on the video. Pass write_path for saving.
-        """
+        '''
         capture = cv2.VideoCapture(path_to_video)
         if capture.isOpened():
             retval, frame = capture.read()
@@ -162,7 +162,7 @@ class Charuco_calibration:
                 axis_frame = frame
             self.all_corners = []
             self.all_ids = []
-            cv2.imshow("camera", frame)
+            cv2.imshow('camera', frame)
             if write_path is not None:
                 video_out.write(axis_frame)
             # if ESC was pressed
@@ -181,11 +181,11 @@ class Charuco_calibration:
                          path_to_video=cv2.CAP_ANY,
                          write_path=None,
                          ):
-        """
+        '''
         If you want calibrate camera now, use this method. Take photos by
         pressing SPACE. Then press ENTER for calibration. Set write_path for
         saving images into chosen directory. To stop process, press ESC.
-        """
+        '''
         capture = cv2.VideoCapture(path_to_video)
         if capture.isOpened():
             retval, frame = capture.read()
@@ -211,15 +211,15 @@ class Charuco_calibration:
             elif cv2.waitKey(33) % 256 == 27:
                 print('ESC pressed, closing...')
                 break
-            cv2.imshow("camera", frame)
+            cv2.imshow('camera', frame)
         capture.release()
         cv2.destroyAllWindows()
 
 
     def _write_image(self, frame, frame_num, write_path=None):
-        """
+        '''
         Save frame to wrute_path with name image_{frame_num}.png
-        """
+        '''
         if write_path is not None:
             cv2.imwrite(
                 os.path.join(write_path, 'image_{}.png'.format(frame_num)),
@@ -228,9 +228,9 @@ class Charuco_calibration:
 
 
     def _draw_axis(self, frame):
-        """
+        '''
         Draw axis on frame that has charuco board.
-        """
+        '''
         axis_frame = np.copy(frame)
         cv2.aruco.drawAxis(
             axis_frame,
@@ -240,14 +240,14 @@ class Charuco_calibration:
             self.tvecs[-1],
             length=0.05
             )
-        cv2.imshow("Axis", axis_frame)
+        cv2.imshow('Axis', axis_frame)
         return axis_frame
 
 
     def load_data(self, path_to_data=None):
-        """
+        '''
         Load main parameters to object from yaml file that has name path_to_data
-        """
+        '''
         if path_to_data is None:
             print('Undefind path')
         else:
@@ -267,9 +267,9 @@ class Charuco_calibration:
 
 
     def dump_data(self, path_to_data=None):
-        """
+        '''
         Dump main parameters from object to yaml file that has name path_to_data
-        """
+        '''
         if path_to_data is None:
             print('Undefind path')
         else:
@@ -289,9 +289,9 @@ class Charuco_calibration:
 
 
     def _calibrate(self, log_out=False):
-        """
+        '''
         Finds camera parameters from corners and ids, that was already prepared
-        """
+        '''
         (
             retval,
             self.camera_matrix,
@@ -315,10 +315,10 @@ class Charuco_calibration:
                     show=False,
                     image_name='Marked frame',
                     log_out=False):
-        """
+        '''
         Get markers' coordinates from frame and add them to all_corners
         Set show=True to get output image.
-        """
+        '''
         marked_frame = np.copy(frame)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         (
