@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 12 18:39:47 2018
-
 @author: mchaus
 """
 
@@ -22,9 +20,24 @@ if __name__ == '__main__':
             square_length=0.1,
             marker_length=0.05,
             )
-    cam_ch_calibr.draw_charuco_board(path='board_4_2.png', shape=(4500, 3000), marginSize=0)
-    # cam_ch_calibr.calibrate_from_image(path_to_data='/home/mchaus/projects/gaze_estimation/local_charuco_calibration/dataset')
+    # Examples
+
+    # Live calibration without writing
+    cam_ch_calibr.live_calibration()
+
+    # Get axis from camera
+    # cam_ch_calibr.axis_on_video()
+
+    # Write charuco board 6x6
+    # cam_ch_calibr.draw_charuco_board(path='board_6x6.png', size=(720, 720), margin_size=0)
+
+    # Calibrate from images that were saved to path
+    # path = '/home/mchaus/projects/gaze_estimation/local_charuco_calibration/dataset'
+    # cam_ch_calibr.calibrate_from_images(path_to_data=path)
+    # print(cam_ch_calibr)
+
+    # Save calculated parameters
     # cam_ch_calibr.dump_data(path_to_data='dump.yaml')
+
+    # Load calculated parameters
     # cam_ch_calibr.load_data(path_to_data='dump.yaml')
-    # cam_ch_calibr.axis_on_video(write_path = 'output2.avi')
-    # cam_ch_calibr.axis_on_video(write_path='out_3x3.avi')
