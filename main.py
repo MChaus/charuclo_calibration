@@ -9,16 +9,16 @@ from charuco_calibration import Charuco_calibration
 if __name__ == '__main__':
     # Big board 1
     # cam_ch_calibr = Charuco_calibration(
-    #         squaresX=5,
-    #         squaresY=7,
+    #         squares_x=5,
+    #         squares_y=7,
     #         square_length=0.0725,
     #         marker_length=0.0435,
     #         )
 
     # Board 2
     # cam_ch_calibr = Charuco_calibration(
-    #         squaresX=6,
-    #         squaresY=4,
+    #         squares_x=6,
+    #         squares_y=4,
     #         square_length=0.1,
     #         marker_length=0.05,
     #         )
@@ -30,12 +30,12 @@ if __name__ == '__main__':
     # cam_ch_calibr.live_calibration()
 
     # Get axis from camera
-    cam_ch_calibr.axis_on_video()
+    # cam_ch_calibr.axis_on_video()
 
     # Write charuco board 6x6
     # cam_ch_calibr = Charuco_calibration(
-    #         squaresX=6,
-    #         squaresY=6,
+    #         squares_x=6,
+    #         squares_y=6,
     #         square_length=0.1,        # length in meters
     #         marker_length=0.05,
     #         )
