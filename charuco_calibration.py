@@ -310,7 +310,7 @@ class Charuco_calibration:
 
     def estimate_board_pose(self, image):
         '''
-        Diff
+        Diff2
         '''
         self.get_markers(image)
         retval, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(
