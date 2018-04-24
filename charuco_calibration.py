@@ -18,8 +18,8 @@ class Charuco_calibration:
                  marker_length=None,
                  camera_matrix=None,
                  dist_coeff=None,
-                 rvecs=None,
-                 tvecs=None,
+                 rvecs=[],
+                 tvecs=[],
                  image_size=None
                  ):
         self.squares_x = squares_x
@@ -137,7 +137,7 @@ class Charuco_calibration:
                 ):
                 image = cv2.imread(image_path)
                 self.image_size = image.shape[0:2]
-                self.get_markers(image, show, image_path)
+                self.get_markers(image, show, image_path, log_out=True)
         self._calibrate()
 
 
@@ -151,12 +151,12 @@ class Charuco_calibration:
             self.image_size = frame.shape[0:2]
         if write_path is not None:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            video_out = cv2.VideoWriter(write_path, fourcc, 20.0, (640,480))
+            video_out = cv2.VideoWriter(write_path, fourcc, 30.0, (640, 480))
         while capture.isOpened():
             retval, frame = capture.read()
             self.get_markers(frame, show=False)
             if self.all_corners != [] and self.all_ids != []:
-                self._calibrate()
+                self.estimate_board_pose(frame)
                 axis_frame = self._draw_axis(frame)
             else:
                 axis_frame = frame
@@ -195,12 +195,10 @@ class Charuco_calibration:
             retval, frame = capture.read()
             # if SPACE was pressed
             # take frame and get markers from it
-            if cv2.waitKey(33) % 256 == 32:
+            if cv2.waitKey(1) % 256 == 32:
                 frame_num += 1
                 self.get_markers(frame, show=True)
                 self._write_image(frame, frame_num, write_path)
-                self._calibrate()
-                self._draw_axis(frame)
             # if ENTER was pressed
             # calibrate camera using Charuco_calibration
             elif cv2.waitKey(33) % 256 == 13:
@@ -238,7 +236,7 @@ class Charuco_calibration:
             self.dist_coeff,
             self.rvecs[-1],
             self.tvecs[-1],
-            length=0.05
+            length=0.06
             )
         cv2.imshow('Axis', axis_frame)
         return axis_frame
@@ -310,6 +308,19 @@ class Charuco_calibration:
             print('Coefficients were calculated')
 
 
+    def estimate_board_pose(self, image):
+        self.get_markers(image)
+        retval, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(
+            self.all_corners[-1],
+            self.all_ids[-1],
+            self.board,
+            self.camera_matrix,
+            self.dist_coeff
+        )
+        if retval:
+            self.rvecs.append(rvec)
+            self.tvecs.append(tvec)
+
     def get_markers(self,
                     frame,
                     show=False,
@@ -325,7 +336,7 @@ class Charuco_calibration:
             markers_coordinates,
             markers_id,
             bad_markers
-            ) = cv2.aruco.detectMarkers(gray, self.dictionary)
+        ) = cv2.aruco.detectMarkers(gray, self.dictionary)
         if len(markers_coordinates):
             (
                 num_corners,
@@ -347,7 +358,7 @@ class Charuco_calibration:
                 self.all_corners.append(charuco_corners)
                 self.all_ids.append(charuco_ids)
                 self.num_frames += 1
-                if show != False:
+                if show:
                     cv2.aruco.drawDetectedMarkers(
                         marked_frame,
                         markers_coordinates,
@@ -369,9 +380,9 @@ class Charuco_calibration:
                         thickness=2
                         )
                     cv2.imshow(image_name, marked_frame)
-            else:
-                if log_out:
-                    print('Corners weren\'t detected')
+        else:
+            if log_out:
+                print('Corners weren\'t detected')
 
 
 if __name__ == '__main__':
