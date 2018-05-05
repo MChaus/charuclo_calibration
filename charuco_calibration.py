@@ -10,7 +10,7 @@ import numpy as np
 import yaml
 import os
 
-class Charuco_calibration:
+class CalibratedCamera:
     def __init__(self,
                  squares_x=None,
                  squares_y=None,
@@ -18,8 +18,8 @@ class Charuco_calibration:
                  marker_length=None,
                  camera_matrix=None,
                  dist_coeff=None,
-                 rvecs=[],
-                 tvecs=[],
+                 rvecs=None,
+                 tvecs=None,
                  image_size=None
                  ):
         self.squares_x = squares_x
@@ -28,7 +28,11 @@ class Charuco_calibration:
         self.marker_length = marker_length
         self.camera_matrix = camera_matrix
         self.dist_coeff = dist_coeff
+        if rvecs is None:
+            rvecs = []
         self.rvecs = rvecs
+        if tvecs is None:
+            tvecs = []
         self.tvecs = tvecs
         self.image_size = image_size
         self.dictionary = cv2.aruco.getPredefinedDictionary(
@@ -225,7 +229,7 @@ class Charuco_calibration:
                 )
 
 
-    def _draw_axis(self, frame):
+    def _draw_axis(self, frame, show=True):
         '''
         Draw axis on frame that has charuco board.
         '''
@@ -238,7 +242,8 @@ class Charuco_calibration:
             self.tvecs[-1],
             length=0.06
             )
-        cv2.imshow('Axis', axis_frame)
+        if show:
+            cv2.imshow('Axis', axis_frame)
         return axis_frame
 
 
@@ -324,11 +329,26 @@ class Charuco_calibration:
             self.rvecs.append(rvec)
             self.tvecs.append(tvec)
 
+
+    def get_bad_markers(self, image):
+        (
+            markers_coordinates,
+            markers_id,
+            bad_markers
+        ) = cv2.aruco.detectMarkers(image, self.dictionary)
+
+        for markers in bad_markers:
+            for i in range(0, len(markers[0])):
+                point_1 = (markers[0][i][0], markers[0][i][1])
+                point_2 = (markers[0][i - 1][0], markers[0][i - 1][1])
+                cv2.line(image, point_1, point_2, color = (0, 0, 255))
+        return image
+
     def get_markers(self,
                     frame,
                     show=False,
                     image_name='Marked frame',
-                    log_out=False):
+                    log_out=True):
         '''
         Get markers' coordinates from frame and add them to all_corners
         Set show=True to get output image.
@@ -386,6 +406,97 @@ class Charuco_calibration:
         else:
             if log_out:
                 print('Corners weren\'t detected')
+
+    def check_board(self, image, rotation_matrix, translation_vector,
+                    column_number=7, row_number=5, square_width = 100,
+                        show=True, line_width=3):
+        # Get parameters in vector form in homogeneous coordinates.
+        extrinsic_matrix = np.identity(4)
+        extrinsic_matrix[0:3, 0:3] = rotation_matrix
+        extrinsic_matrix[0:3, 3] = translation_vector
+        intrinsic_matrix = np.zeros((3, 4))
+        intrinsic_matrix[0:3, 0:3] = self.camera_matrix
+        undistored_image = cv2.undistort(image, self.camera_matrix, self.dist_coeff)
+        # DRAW SQUARES ON BOARD.
+        # Coordinates of squares on horizontal and vertical axis.
+        for x in range(1, column_number + 1):
+            for y in range(1, row_number + 1):
+                # Get three corners of square in camera coordinate system.
+                point_1 = extrinsic_matrix.dot([[square_width * x], [square_width * y], [0], [1]])
+                point_2 = extrinsic_matrix.dot([[square_width * (x - 1)], [square_width * y], [0], [1]])
+                point_3 = extrinsic_matrix.dot([[square_width * x], [square_width * (y - 1)], [0], [1]])
+                # Get three corners of square on image in homogeneous coordinates.
+                point_1 = intrinsic_matrix.dot(point_1)
+                point_2 = intrinsic_matrix.dot(point_2)
+                point_3 = intrinsic_matrix.dot(point_3)
+                # Get normalized corners on image. Division by constant.
+                point_1 /= point_1[2, 0]
+                point_2 /= point_2[2, 0]
+                point_3 /= point_3[2, 0]
+                # Draw square on image.
+                cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_2[0, 0]), int(point_2[1, 0])), (255,0,0), line_width)
+                cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_3[0, 0]), int(point_3[1, 0])), (255,0,0), line_width)
+        # DRAW AXIS ON BOARD.
+        # Get three corners of board in camera coordinate system.
+        point_1 = extrinsic_matrix.dot([[0], [0], [0], [1]])
+        point_2 = extrinsic_matrix.dot([[square_width * column_number], [0], [0], [1]])
+        point_3 = extrinsic_matrix.dot([[0], [square_width * row_number], [0], [1]])
+        # Get three corners of board on image in homogeneous coordinates.
+        point_1 = intrinsic_matrix.dot(point_1)
+        point_2 = intrinsic_matrix.dot(point_2)
+        point_3 = intrinsic_matrix.dot(point_3)
+        # Get normalized corners on image. Division by constant.
+        point_1 /= point_1[2, 0]
+        point_2 /= point_2[2, 0]
+        point_3 /= point_3[2, 0]
+        # Draw axis on image.
+        cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_2[0, 0]), int(point_2[1, 0])), (0,0,255), line_width)
+        cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_3[0, 0]), int(point_3[1, 0])), (0,0,255), line_width)
+        if show:
+            cv2.imshow('check_board', undistored_image)
+            cv2.waitKey()
+        return undistored_image
+
+
+    def check_transition(self, image_1, image_2, cam_2, rmat_to_cam_2, tvec_to_cam_2,
+                         rmat_cam_1, tvec_1, rmat_cam_2, tvec_2,
+                         column_number=7, row_number=5, square_width = 100,
+                         show=True, line_width=3):
+
+        undistored_image_1 = cv2.undistort(image_1, self.camera_matrix, self.dist_coeff)
+        undistored_image_2 = cv2.undistort(image_2, cam_2.camera_matrix, cam_2.dist_coeff)
+
+        extrinsic_matrix_to_cam_2 = np.identity(4)
+        extrinsic_matrix_to_cam_2[0:3, 0:3] = rmat_to_cam_2
+        extrinsic_matrix_to_cam_2[0:3, 3] = tvec_to_cam_2
+
+        extrinsic_matrix_cam_1 = np.identity(4)
+        extrinsic_matrix_cam_1[0:3, 0:3] = rmat_cam_1
+        extrinsic_matrix_cam_1[0:3, 3] = tvec_1
+        intrinsic_matrix_cam_1 = np.zeros((3, 4))
+        intrinsic_matrix_cam_1[0:3, 0:3] = self.camera_matrix
+
+        extrinsic_matrix_cam_2 = np.identity(4)
+        extrinsic_matrix_cam_2[0:3, 0:3] = rmat_cam_2
+        extrinsic_matrix_cam_2[0:3, 3] = tvec_2
+        intrinsic_matrix_cam_2 = np.zeros((3, 4))
+        intrinsic_matrix_cam_2[0:3, 0:3] = cam_2.camera_matrix
+
+        for x in range(0, column_number + 1):
+            for y in range(0, row_number + 1):
+                point_in_cam_1_coordinates = extrinsic_matrix_cam_1.dot([[x * square_width], [y * square_width], [0], [1]])
+                point_on_image_1 = intrinsic_matrix_cam_1.dot(point_in_cam_1_coordinates)
+                point_on_image_1 /= point_on_image_1[2, 0]
+                cv2.circle(undistored_image_1, (int(point_on_image_1[0, 0]), int(point_on_image_1[1, 0])), line_width, (0,0,255), -1)
+
+                point_in_cam_2_coordinates = extrinsic_matrix_to_cam_2.dot(point_in_cam_1_coordinates)
+                point_on_image_2 = intrinsic_matrix_cam_1.dot(point_in_cam_2_coordinates)
+                point_on_image_2 /= point_on_image_2[2, 0]
+                cv2.circle(undistored_image_2, (int(point_on_image_2[0, 0]), int(point_on_image_2[1, 0])), line_width, (0,0,255), -1)
+        if show:
+            cv2.imshow('Cam_1', undistored_image_1)
+            cv2.imshow('Cam_2', undistored_image_2)
+            cv2.waitKey()
 
 
 if __name__ == '__main__':
