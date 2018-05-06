@@ -11,17 +11,9 @@ import yaml
 import os
 
 class CalibratedCamera:
-    def __init__(self,
-                 squares_x=None,
-                 squares_y=None,
-                 square_length=None,
-                 marker_length=None,
-                 camera_matrix=None,
-                 dist_coeff=None,
-                 rvecs=None,
-                 tvecs=None,
-                 image_size=None
-                 ):
+    def __init__(self, squares_x=None, squares_y=None, square_length=None,
+                 marker_length=None, camera_matrix=None, dist_coeff=None,
+                 rvecs=None, tvecs=None, image_size=None):
         self.squares_x = squares_x
         self.squares_y = squares_y
         self.square_length = square_length
@@ -35,9 +27,7 @@ class CalibratedCamera:
             tvecs = []
         self.tvecs = tvecs
         self.image_size = image_size
-        self.dictionary = cv2.aruco.getPredefinedDictionary(
-                cv2.aruco.DICT_6X6_250
-                )
+        self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.board = self._create_charuco_board()
         self.all_corners = []
         self.all_ids = []
@@ -97,22 +87,16 @@ class CalibratedCamera:
                 self.square_length is not None and
                 self.marker_length is not None
             ):
-            return cv2.aruco.CharucoBoard_create(
-                self.squares_x,
-                self.squares_y,
-                self.square_length,
-                self.marker_length,
-                self.dictionary
-                )
+            return cv2.aruco.CharucoBoard_create(self.squares_x, self.squares_y,
+                                                 self.square_length,
+                                                 self.marker_length,
+                                                 self.dictionary)
         else:
             print('Board wasn\'t created')
             return None
 
 
-    def draw_charuco_board(self,
-                           path=None,
-                           size=(1080, 1920),
-                           margin_size=100,
+    def draw_charuco_board(self, path=None, size=(1080, 1920), margin_size=100,
                            show=False):
         '''
         Save charuco board and show its instance
@@ -181,10 +165,7 @@ class CalibratedCamera:
         cv2.destroyAllWindows()
 
 
-    def live_calibration(self,
-                         path_to_video=cv2.CAP_ANY,
-                         write_path=None,
-                         ):
+    def live_calibration(self, path_to_video=cv2.CAP_ANY, write_path=None,):
         '''
         If you want calibrate camera now, use this method. Take photos by
         pressing SPACE. Then press ENTER for calibration. Set write_path for
@@ -223,10 +204,7 @@ class CalibratedCamera:
         Save frame to write_path with name image_{frame_num}.png
         '''
         if write_path is not None:
-            cv2.imwrite(
-                os.path.join(write_path, 'image_{}.png'.format(frame_num)),
-                frame
-                )
+            cv2.imwrite(os.path.join(write_path, 'image_{}.png'.format(frame_num)), frame)
 
 
     def _draw_axis(self, frame, show=True):
@@ -249,7 +227,8 @@ class CalibratedCamera:
 
     def load_data(self, path_to_data=None):
         '''
-        Load main parameters to object from yaml file that has name path_to_data
+        Load main parameters to object from yaml file that has name
+        path_to_data.
         '''
         if path_to_data is None:
             print('Undefind path')
@@ -271,7 +250,8 @@ class CalibratedCamera:
 
     def dump_data(self, path_to_data=None):
         '''
-        Dump main parameters from object to yaml file that has name path_to_data
+        Dump main parameters from object to yaml file that has name
+        path_to_data.
         '''
         if path_to_data is None:
             print('Undefind path')
@@ -293,24 +273,15 @@ class CalibratedCamera:
 
     def _calibrate(self, log_out=False):
         '''
-        Finds camera parameters from corners and ids, that was already prepared
+        Finds camera parameters from corners and ids, that was already prepared.
         '''
-        (
-            retval,
-            self.camera_matrix,
-            self.dist_coeff,
-            self.rvecs,
-            self.tvecs
-            ) = cv2.aruco.calibrateCameraCharuco(
-                self.all_corners,
-                self.all_ids,
-                self.board,
-                self.image_size,
-                self.camera_matrix,
-                self.dist_coeff
-                )
+        retval, self.camera_matrix, self.dist_coeff, self.rvecs, self.tvecs =\
+        cv2.aruco.calibrateCameraCharuco(self.all_corners, self.all_ids,
+                                         self.board, self.image_size,
+                                         self.camera_matrix, self.dist_coeff)
         if log_out:
             print('Coefficients were calculated')
+        return self
 
 
     def estimate_board_pose(self, image):
@@ -391,10 +362,11 @@ class CalibratedCamera:
         return charuco_corners, charuco_ids
 
 
-    def check_calibration(self, image, column_number=7, row_number=5,
+    def check_calibration_charuco(self, image, column_number=7, row_number=5,
                           square_width = 100, show=True, line_width=3):
         '''
-        Returns image with points on the corners of the squares.
+        Function for verifying the correctness of calibration, using image with
+        ChArUco board. Returns image with points on the corners of the squares.
         '''
         rotation_matrix, translation_vector = self.estimate_board_pose(image)
         # Get parameters in vector form in homogeneous coordinates.
@@ -447,15 +419,24 @@ class CalibratedCamera:
 
 
     def get_disposition_charuco(self, image_1, image_2, camera_2):
+        '''
+        Calculates extrinsic matrix for camera_2, using images of the same
+        ChArUco board. image_1 coresponds to self, image_2 coresponds to
+        camera_2.
+        '''
+        # Calculation of extrinsic matrix for the first camera in
+        # homogeneous coordinates.
         rotation_matrix_1, translation_vector_1 = self.estimate_board_pose(image_1)
         extrinsic_matrix_1 = np.identity(4)
         extrinsic_matrix_1[0:3, 0:3] = rotation_matrix_1
         extrinsic_matrix_1[0:3, 3] =  translation_vector_1[0:3, 0]
-
+        # Calculation of extrinsic matrix for the first camera in
+        # homogeneous coordinates.
         rotation_matrix_2, translation_vector_2 = camera_2.estimate_board_pose(image_2)
         extrinsic_matrix_2 = np.identity(4)
         extrinsic_matrix_2[0:3, 0:3] = rotation_matrix_2
         extrinsic_matrix_2[0:3, 3] =  translation_vector_2[0:3, 0]
+        # Calculation of extrinsic matrix from first camer to second.
         extrinsic_matrix_to_camera_2 = extrinsic_matrix_2.dot(np.linalg.inv(extrinsic_matrix_1))
         rotation_matrix = extrinsic_matrix_to_camera_2[0:3, 0:3]
         translation_vector = extrinsic_matrix_to_camera_2[0:3, 3].reshape(3,-1)
@@ -467,6 +448,7 @@ class CalibratedCamera:
                          column_number=6, row_number=5, square_width = 100,
                          show=True, line_width=3):
         '''
+        Function for verifying the correctness of extrinsic parameters.
         Returns images with points on the corners of the squares.
         '''
         # Estimate board pose for first camera.
@@ -511,8 +493,8 @@ class CalibratedCamera:
                 point_on_image_2 /= point_on_image_2[2, 0]
                 cv2.circle(undistored_image_2, (int(point_on_image_2[0, 0]), int(point_on_image_2[1, 0])), line_width, (0,0,255), -1)
         if show:
-            cv2.imshow('Camera_1', undistored_image_1[::2,::2,:])
-            cv2.imshow('Camera_2', undistored_image_2[::2,::2,:])
+            cv2.imshow('Camera_1', undistored_image_1)
+            cv2.imshow('Camera_2', undistored_image_2)
             cv2.waitKey()
             cv2.destroyAllWindows()
         return undistored_image_1, undistored_image_2
