@@ -13,7 +13,7 @@ import os
 class CalibratedCamera:
     def __init__(self, squares_x=None, squares_y=None, square_length=None,
                  marker_length=None, camera_matrix=None, dist_coeff=None,
-                 rvecs=None, tvecs=None, image_size=None):
+                 rvecs=None, tvecs=None, image_size=None, flipped=False):
         self.squares_x = squares_x
         self.squares_y = squares_y
         self.square_length = square_length
@@ -32,6 +32,7 @@ class CalibratedCamera:
         self.all_corners = []
         self.all_ids = []
         self.num_frames = 0
+        self.flipped = flipped
 
 
     def __str__(self):
@@ -218,7 +219,7 @@ class CalibratedCamera:
             self.dist_coeff,
             self.rvecs[-1],
             self.tvecs[-1],
-            length=0.06
+            length=self.square_length
             )
         if show:
             cv2.imshow('Axis', axis_frame)
