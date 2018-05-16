@@ -10,6 +10,7 @@ import numpy as np
 from PIL import Image
 import numpy.linalg as LA
 import os
+import json
 
 if __name__ == '__main__':
 
@@ -93,27 +94,45 @@ if __name__ == '__main__':
     tvec_ir_color = np.array([[-51.5740], [0.8744], [-1.3294]])
 
     rmatr_basler_color = cv2.Rodrigues(np.array([[0.06869832, 0.03180862, 0.0087055 ]]))[0]
-    tvec_basler_color = np.array([[ 98.3966582  -44.34708768  -6.71150373]])
-
+    tvec_basler_color = np.array([[ 98.3966582],  [-44.34708768],  [-6.71150373]])
     # Calirate wall using web cam
-    image_web_cam_wall = cv2.imread('images\web_cam\charuco_web_cam_wall.jpg')
-    # web_cam.draw_bad_markers(image_web_cam_wall)
-    # web_cam.draw_markers(image_web_cam_wall)
-    # web_cam.check_calibration_charuco(image_web_cam_wall, show=True, line_width=3, square_width = 60, row_number = 6, column_number=4,)
+    image_web_cam_wall = cv2.imread('images/web_cam/charuco_web_cam_wall.jpg')
+    rmatr_wall_web_cam, tvec_wall_web_cam = web_cam.estimate_board_pose(image_web_cam_wall)
 
     # Calirate screen using web cam
-    image_web_cam_screen = cv2.imread('images\web_cam\charuco_web_cam_screen.jpg')
-    rmatr_web_cam_screen, tvec_web_cam_screen = web_cam.estimate_board_pose(image_web_cam_screen)
-    # web_cam.draw_bad_markers(image_web_cam_screen)
-    # web_cam.draw_markers(image_web_cam_screen)
-    # web_cam.check_calibration_charuco(image_web_cam_screen, show=True, line_width=3, square_width = 60, row_number = 6, column_number=4)
+    image_web_cam_screen = cv2.imread('images/web_cam/charuco_web_cam_screen.jpg')
+    rmatr_screen_web_cam, tvec_screen_web_cam = web_cam.estimate_board_pose(image_web_cam_screen)
 
     # Find extrinsic matrix from web cam to color
-    image_charuco_color = cv2.imread('images\color_kinect\charuco_color_1.png')
+    image_charuco_color = cv2.imread('images/color_kinect/charuco_color_1.png')
     image_charuco_color = cv2.flip(image_charuco_color, 1)
-    image_charuco_web_cam = cv2.imread('images\web_cam\charuco_web_cam_color_1.jpg')
+    image_charuco_web_cam = cv2.imread('images/web_cam/charuco_web_cam_color_1.jpg')
     rmatr_web_cam_color, tvec_web_cam_color = web_cam.get_disposition_charuco(image_charuco_web_cam, image_charuco_color, kinect_color)
-    # kinect_color.check_calibration_charuco(image_charuco_color, show=True, line_width=3, square_width = 60, row_number = 6, column_number=4)
-    # web_cam.check_calibration_charuco(image_charuco_web_cam, show=True, line_width=3, square_width = 60, row_number = 6, column_number=4)
 
-    
+    extrinsic_matrix_ir_color = kinect_ir.extrinsic_matrix(rmatr_ir_color, tvec_ir_color)
+    extrinsic_matrix_basler_color = basler_ir.extrinsic_matrix(rmatr_basler_color, tvec_basler_color)
+    extrinsic_matrix_wall_web_cam = web_cam.extrinsic_matrix(rmatr_wall_web_cam, tvec_wall_web_cam)
+    extrinsic_matrix_screen_web_cam = web_cam.extrinsic_matrix(rmatr_screen_web_cam, tvec_screen_web_cam)
+    extrinsic_matrix_web_cam_clolor = web_cam.extrinsic_matrix(rmatr_web_cam_color, tvec_web_cam_color)
+
+    extrinsic_matrix_color_ir = LA.inv(extrinsic_matrix_ir_color)
+    extrinsic_matrix_web_cam_ir = extrinsic_matrix_color_ir @ extrinsic_matrix_web_cam_clolor
+    extrinsic_matrix_screen_ir = extrinsic_matrix_web_cam_ir @ extrinsic_matrix_screen_web_cam
+    extrinsic_matrix_wall_ir = extrinsic_matrix_web_cam_ir @ extrinsic_matrix_wall_web_cam
+    extrinsic_matrix_basler_ir = extrinsic_matrix_color_ir @ extrinsic_matrix_basler_color
+
+    extrinsic_matrices = {
+        'extrinsic_matrix_color_ir' : extrinsic_matrix_color_ir.tolist(),
+        'extrinsic_matrix_web_cam_ir' : extrinsic_matrix_web_cam_ir.tolist(),
+        'extrinsic_matrix_screen_ir' : extrinsic_matrix_screen_ir.tolist(),
+        'extrinsic_matrix_wall_ir' : extrinsic_matrix_wall_ir.tolist(),
+        'extrinsic_matrix_basler_ir' :  extrinsic_matrix_basler_ir.tolist()
+    }
+
+    with open('extrinsic_matrices.json', 'w') as _file:
+        json.dump(extrinsic_matrices, _file, ensure_ascii=False)
+        _file.close()
+
+    # with open('extrinsic_matrices.json', 'r') as fp:
+    #     data = json.load(fp)
+    # print(data)

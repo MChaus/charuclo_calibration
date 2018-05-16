@@ -621,5 +621,11 @@ class CalibratedCamera:
             cv2.destroyAllWindows()
         return undistored_image_1, undistored_image_2
 
+    def extrinsic_matrix(self, rotation_matrix, translation_vector):
+        extrinsic_matrix = np.identity(4)
+        extrinsic_matrix[0:3, 0:3] = rotation_matrix[0:3, 0:3]
+        extrinsic_matrix[0:3, 3] = translation_vector[0:3, 0]
+        return extrinsic_matrix
+
 if __name__ == '__main__':
     print('This module provides class for convenient charuco calibration')
