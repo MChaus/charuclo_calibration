@@ -109,7 +109,20 @@ class CalibratedCamera:
             cv2.imshow('charuco board', image)
 
 
-    def calibrate_from_images(self, path_to_data=None, show=False):
+        def _calibrate_charuco(self, log_out=False):
+            '''
+            Finds camera parameters from corners and ids, that was already prepared.
+            '''
+            retval, self.camera_matrix, self.dist_coeff, self.rvecs, self.tvecs =\
+            cv2.aruco.calibrateCameraCharuco(self.all_corners, self.all_ids,
+                                             self.board, self.image_size,
+                                             self.camera_matrix, self.dist_coeff)
+            if log_out:
+                print('Coefficients were calculated')
+            return self
+
+
+    def charuco_calibration_dir(self, path_to_data=None, show=False):
         '''
         Get camera parameters from already taken images, that locate in the
         folder path_to_data. If you want to see markers, pass show=True.
@@ -127,7 +140,7 @@ class CalibratedCamera:
                 image = cv2.imread(image_path)
                 self.image_size = image.shape[0:2]
                 self.get_markers(image, show, image_path, log_out=True)
-        self._calibrate()
+        self._calibrate_charuco()
 
 
     def axis_on_video(self, path_to_video=cv2.CAP_ANY, write_path = None):
@@ -146,7 +159,7 @@ class CalibratedCamera:
             self.get_markers(frame, show=False)
             if self.all_corners != [] and self.all_ids != []:
                 self.estimate_board_pose(frame)
-                axis_frame = self._draw_axis(frame)
+                axis_frame = self._xis(frame)
             else:
                 axis_frame = frame
             self.all_corners = []
@@ -188,8 +201,8 @@ class CalibratedCamera:
             # if ENTER was pressed
             # calibrate camera using Charuco_calibration
             elif cv2.waitKey(33) % 256 == 13:
-                self._calibrate()
-                self._draw_axis(frame)
+                self._calibrate_charuco()
+                self._xis(frame)
             # if ESC was pressed
             # close all windows
             elif cv2.waitKey(33) % 256 == 27:
@@ -208,7 +221,7 @@ class CalibratedCamera:
             cv2.imwrite(os.path.join(write_path, 'image_{}.png'.format(frame_num)), frame)
 
 
-    def _draw_axis(self, frame, show=True):
+    def draw_axis(self, frame, show=True):
         '''
         Draw axis on frame that has charuco board.
         '''
@@ -223,6 +236,7 @@ class CalibratedCamera:
             )
         if show:
             cv2.imshow('Axis', axis_frame)
+            cv2.waitKey()
         return axis_frame
 
 
@@ -272,19 +286,6 @@ class CalibratedCamera:
                 yaml.dump(metadata, _file)
 
 
-    def _calibrate(self, log_out=False):
-        '''
-        Finds camera parameters from corners and ids, that was already prepared.
-        '''
-        retval, self.camera_matrix, self.dist_coeff, self.rvecs, self.tvecs =\
-        cv2.aruco.calibrateCameraCharuco(self.all_corners, self.all_ids,
-                                         self.board, self.image_size,
-                                         self.camera_matrix, self.dist_coeff)
-        if log_out:
-            print('Coefficients were calculated')
-        return self
-
-
     def estimate_board_pose(self, image):
         '''
         Pose estimation for a ChArUco board.
@@ -306,7 +307,7 @@ class CalibratedCamera:
         return rotation_matrix, translation_vector
 
 
-    def get_bad_markers(self, image):
+    def draw_bad_markers(self, image, show=True):
         '''
         Returns image with bad markers.
         '''
@@ -317,23 +318,47 @@ class CalibratedCamera:
                 point_1 = (markers[0][i][0], markers[0][i][1])
                 point_2 = (markers[0][i - 1][0], markers[0][i - 1][1])
                 cv2.line(image, point_1, point_2, color = (0, 0, 255))
+        if show:
+            cv2.imshow('Bad markers', image)
+            cv2.waitKey()
         return image
 
-    def get_markers(self, frame, show=False, image_name='Marked frame',
+    def draw_markers(self, image, show=True):
+        '''
+        Returns image with good markers.
+        '''
+        marked_image = np.copy(image)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        markers_coordinates, markers_id, bad_markers =\
+        cv2.aruco.detectMarkers(image, self.dictionary)
+        num_corners, charuco_corners, charuco_ids =\
+        cv2.aruco.interpolateCornersCharuco(markers_coordinates, markers_id,
+                                            gray_image, self.board)
+        cv2.aruco.drawDetectedMarkers(marked_image,
+                                      markers_coordinates,
+                                      markers_id)
+        cv2.aruco.drawDetectedCornersCharuco(marked_image,
+                                             charuco_corners,
+                                             cornerColor = (0, 255,255))
+        if show:
+            cv2.imshow('Bad markers', marked_image)
+            cv2.waitKey()
+        return image
+
+    def get_markers(self, image, show=False, image_name='Marked frame',
                     log_out=True):
         '''
         Get markers' coordinates from frame and add them to all_corners
         Set show=True to get output image.
         Returns markers coordinates ans ids.
         '''
-        marked_frame = np.copy(frame)
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         markers_coordinates, markers_id, bad_markers =\
-        cv2.aruco.detectMarkers(gray_frame, self.dictionary)
+        cv2.aruco.detectMarkers(gray_image, self.dictionary)
         if len(markers_coordinates) > 0:
             num_corners, charuco_corners, charuco_ids =\
             cv2.aruco.interpolateCornersCharuco(markers_coordinates,
-                                                 markers_id, gray_frame,
+                                                 markers_id, gray_image,
                                                  self.board)
             if (
                     charuco_corners is not None and
@@ -346,17 +371,7 @@ class CalibratedCamera:
                 self.all_ids.append(charuco_ids)
                 self.num_frames += 1
                 if show:
-                    cv2.aruco.drawDetectedMarkers(marked_frame,
-                                                  markers_coordinates,
-                                                  markers_id)
-                    cv2.aruco.drawDetectedCornersCharuco(marked_frame,
-                                                         charuco_corners,
-                                                         cornerColor = (0, 255,255))
-                    message = 'Taken photos:' + str(self.num_frames)
-                    cv2.putText(img=marked_frame, text=message, org=(20, 40),
-                                fontFace=0, fontScale=0.6, color=(0, 0, 0),
-                                thickness=2)
-                    cv2.imshow(image_name, marked_frame)
+                    self.draw_markers(image)
         else:
             if log_out:
                 print('Corners weren\'t detected')
