@@ -627,5 +627,8 @@ class CalibratedCamera:
         extrinsic_matrix[0:3, 3] = translation_vector[0:3, 0]
         return extrinsic_matrix
 
+    def calculate_mse(self):
+        
+
 if __name__ == '__main__':
     print('This module provides class for convenient charuco calibration')
