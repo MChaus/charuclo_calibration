@@ -97,12 +97,12 @@ if __name__ == '__main__':
     tvec_basler_color = np.array([[ 98.3966582],  [-44.34708768],  [-6.71150373]])
 
     # Find extrinsic matrix from basler camera to color Kinect camera
-    image_charuco_color = cv2.imread('images/color_kinect/charuco_color_1.png')
+    image_charuco_color = cv2.imread('images/color_kinect/00428.png')
     image_charuco_color = cv2.flip(image_charuco_color, 1)
-    image_charuco_basler = cv2.imread('images/web_cam/charuco_web_cam_color_1.jpg')
+    image_charuco_basler = cv2.imread('images/basler/00428.png')
     image_charuco_basler = cv2.flip(image_charuco_basler, 1)
-    rmatr_basler_color, tvec_basler_color = basler.get_disposition_charuco(image_charuco_basler, image_charuco_color, kinect_color)
-
+    rmatr_basler_color, tvec_basler_color = basler_ir.get_disposition_charuco(image_charuco_basler, image_charuco_color, kinect_color)
+    print(rmatr_basler_color, tvec_basler_color)
 
     # Calirate wall using web cam
     image_wall_web_cam = cv2.imread('images/web_cam/charuco_web_cam_wall.jpg')

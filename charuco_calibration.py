@@ -435,7 +435,7 @@ class CalibratedCamera:
 
 
     def check_calibration_charuco(self, image, column_number=7, row_number=5,
-                          square_width = 100, show=True, line_width=3):
+                          square_width = 100, show=True, line_width=3, scale=1):
         '''
         Function for verifying the correctness of calibration, using image with
         ChArUco board. Returns image with points on the corners of the squares.
@@ -484,7 +484,7 @@ class CalibratedCamera:
         cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_2[0, 0]), int(point_2[1, 0])), (0,0,255), line_width)
         cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_3[0, 0]), int(point_3[1, 0])), (0,0,255), line_width)
         if show:
-            cv2.imshow('check_board', undistored_image[::2, ::2, :])
+            cv2.imshow('check_board', undistored_image[::scale, ::scale, :])
             cv2.waitKey()
             cv2.destroyAllWindows()
         return undistored_image
@@ -628,7 +628,7 @@ class CalibratedCamera:
         return extrinsic_matrix
 
     def calculate_mse(self):
-        
+        pass
 
 if __name__ == '__main__':
     print('This module provides class for convenient charuco calibration')
