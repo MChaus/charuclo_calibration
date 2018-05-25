@@ -221,7 +221,7 @@ class CalibratedCamera:
             cv2.imwrite(os.path.join(write_path, 'image_{}.png'.format(frame_num)), frame)
 
 
-    def draw_axis(self, frame, show=True):
+    def draw_axis(self, frame, show=True, scale=1):
         '''
         Draw axis on frame that has charuco board.
         '''
@@ -235,7 +235,7 @@ class CalibratedCamera:
             length=self.square_length
             )
         if show:
-            cv2.imshow('Axis', axis_frame)
+            cv2.imshow('Axis', axis_frame[::scale,::scale,:])
             cv2.waitKey()
         return axis_frame
 
@@ -323,7 +323,7 @@ class CalibratedCamera:
             cv2.waitKey()
         return image
 
-    def draw_markers(self, image, show=True):
+    def draw_markers(self, image, show=True, scale=1):
         '''
         Returns image with good markers.
         '''
@@ -341,7 +341,7 @@ class CalibratedCamera:
                                              charuco_corners,
                                              cornerColor = (0, 255,255))
         if show:
-            cv2.imshow('Bad markers', marked_image)
+            cv2.imshow('Bad markers', marked_image[::scale, ::scale, :])
             cv2.waitKey()
         return image
 
@@ -376,62 +376,6 @@ class CalibratedCamera:
             if log_out:
                 print('Corners weren\'t detected')
         return charuco_corners, charuco_ids
-
-
-    def check_calibration_charuco(self, image, column_number=7, row_number=5,
-                          square_width = 100, show=True, line_width=3):
-        '''
-        Function for verifying the correctness of calibration, using image with
-        ChArUco board. Returns image with points on the corners of the squares.
-        '''
-        rotation_matrix, translation_vector = self.estimate_board_pose(image)
-        # Get parameters in vector form in homogeneous coordinates.
-        extrinsic_matrix = np.identity(4)
-        extrinsic_matrix[0:3, 0:3] = rotation_matrix
-        extrinsic_matrix[0:3, 3] = translation_vector[0:3, 0]
-        intrinsic_matrix = np.zeros((3, 4))
-        intrinsic_matrix[0:3, 0:3] = self.camera_matrix
-        undistored_image = cv2.undistort(image, self.camera_matrix, self.dist_coeff)
-        # DRAW SQUARES ON BOARD.
-        # Coordinates of squares on horizontal and vertical axis.
-        for x in range(1, column_number + 1):
-            for y in range(1, row_number + 1):
-                # Get three corners of square in camera coordinate system.
-                point_1 = extrinsic_matrix.dot([[square_width * x], [square_width * y], [0], [1]])
-                point_2 = extrinsic_matrix.dot([[square_width * (x - 1)], [square_width * y], [0], [1]])
-                point_3 = extrinsic_matrix.dot([[square_width * x], [square_width * (y - 1)], [0], [1]])
-                # Get three corners of square on image in homogeneous coordinates.
-                point_1 = intrinsic_matrix.dot(point_1)
-                point_2 = intrinsic_matrix.dot(point_2)
-                point_3 = intrinsic_matrix.dot(point_3)
-                # Get normalized corners on image. Division by constant.
-                point_1 /= point_1[2, 0]
-                point_2 /= point_2[2, 0]
-                point_3 /= point_3[2, 0]
-                # Draw square on image.
-                cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_2[0, 0]), int(point_2[1, 0])), (255,0,0), line_width)
-                cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_3[0, 0]), int(point_3[1, 0])), (255,0,0), line_width)
-        # DRAW AXIS ON BOARD.
-        # Get three corners of board in camera coordinate system.
-        point_1 = extrinsic_matrix.dot([[0], [0], [0], [1]])
-        point_2 = extrinsic_matrix.dot([[square_width * column_number], [0], [0], [1]])
-        point_3 = extrinsic_matrix.dot([[0], [square_width * row_number], [0], [1]])
-        # Get three corners of board on image in homogeneous coordinates.
-        point_1 = intrinsic_matrix.dot(point_1)
-        point_2 = intrinsic_matrix.dot(point_2)
-        point_3 = intrinsic_matrix.dot(point_3)
-        # Get normalized corners on image. Division by constant.
-        point_1 /= point_1[2, 0]
-        point_2 /= point_2[2, 0]
-        point_3 /= point_3[2, 0]
-        # Draw axis on image.
-        cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_2[0, 0]), int(point_2[1, 0])), (0,0,255), line_width)
-        cv2.line(undistored_image, (int(point_1[0, 0]), int(point_1[1, 0])), (int(point_3[0, 0]), int(point_3[1, 0])), (0,0,255), line_width)
-        if show:
-            cv2.imshow('check_board', undistored_image[::2, ::2, :])
-            cv2.waitKey()
-            cv2.destroyAllWindows()
-        return undistored_image
 
 
     def check_calibration_charuco(self, image, column_number=7, row_number=5,
@@ -512,60 +456,6 @@ class CalibratedCamera:
         rotation_matrix = extrinsic_matrix_to_camera_2[0:3, 0:3]
         translation_vector = extrinsic_matrix_to_camera_2[0:3, 3].reshape(3,-1)
         return rotation_matrix, translation_vector
-
-
-    def check_transition(self, image_1, image_2, camera_2,
-                         rotation_matrix_to_camera_2, translation_vector_to_camera_2,
-                         column_number=6, row_number=5, square_width = 100,
-                         show=True, line_width=3, scale=2):
-        '''
-        Function for verifying the correctness of extrinsic parameters.
-        Returns images with points on the corners of the squares.
-        '''
-        # Estimate board pose for first camera.
-        rotation_matrix_1, translation_vector_1 = self.estimate_board_pose(image_1)
-        # Estimate board pose for second camera.
-        undistored_image_1 = cv2.undistort(image_1, self.camera_matrix, self.dist_coeff)
-        undistored_image_2 = cv2.undistort(image_2, camera_2.camera_matrix, camera_2.dist_coeff)
-        # undistored_image_1 = np.copy(image_1)
-        # undistored_image_2 = np.copy(image_2)
-        # Build extrinsic matrix from first camera to second in vector form
-        # in homogeneous coordinates.
-        extrinsic_matrix_to_camera_2 = np.identity(4)
-        extrinsic_matrix_to_camera_2[0:3, 0:3] = rotation_matrix_to_camera_2
-        extrinsic_matrix_to_camera_2[0:3, 3] = translation_vector_to_camera_2[0:3, 0]
-        # Build first camera's extrinsic and intrinsic matrix in vector
-        # form in homogeneous
-        # coordinates.
-        extrinsic_matrix_camera_1 = np.identity(4)
-        extrinsic_matrix_camera_1[0:3, 0:3] = rotation_matrix_1
-        extrinsic_matrix_camera_1[0:3, 3] = translation_vector_1[0:3, 0]
-        intrinsic_matrix_camera_1 = np.zeros((3, 4))
-        intrinsic_matrix_camera_1[0:3, 0:3] = self.camera_matrix
-        # Build second camera's intrinsic matrix in vector form in homogeneous
-        # coordinates.
-        intrinsic_matrix_camera_2 = np.zeros((3, 4))
-        intrinsic_matrix_camera_2[0:3, 0:3] = camera_2.camera_matrix
-        # DRAW CORNERS ON BOARD.
-        # Coordinates of squares vertex on horizontal and vertical axis.
-        for x in range(0, column_number + 1):
-            for y in range(0, row_number + 1):
-                # Draw point from space on image_1.
-                point_in_camera_1_coordinates = extrinsic_matrix_camera_1.dot([[x * square_width], [y * square_width], [0], [1]])
-                point_on_image_1 = intrinsic_matrix_camera_1.dot(point_in_camera_1_coordinates)
-                point_on_image_1 /= point_on_image_1[2, 0]
-                cv2.circle(undistored_image_1, (int(point_on_image_1[0, 0]), int(point_on_image_1[1, 0])), line_width, (0,0,255), -1)
-                # Draw same point from space on image_2.
-                point_in_camera_2_coordinates = extrinsic_matrix_to_camera_2.dot(point_in_camera_1_coordinates)
-                point_on_image_2 = intrinsic_matrix_camera_2.dot(point_in_camera_2_coordinates)
-                point_on_image_2 /= point_on_image_2[2, 0]
-                cv2.circle(undistored_image_2, (int(point_on_image_2[0, 0]), int(point_on_image_2[1, 0])), line_width, (0,0,255), -1)
-        if show:
-            cv2.imshow('Camera_1', undistored_image_1[::scale, ::scale, :])
-            cv2.imshow('Camera_2', undistored_image_2[::scale, ::scale, :])
-            cv2.waitKey()
-            cv2.destroyAllWindows()
-        return undistored_image_1, undistored_image_2
 
 
     def check_transition_chess(self, image_1, image_2, camera_2,
