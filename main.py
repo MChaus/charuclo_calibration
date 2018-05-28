@@ -144,7 +144,7 @@ if __name__ == '__main__':
                                     row_number=6, square_width = 60,
                                     show=True, line_width=5, scale=1)
 
-    
+
     # for r_matr, t_vec in zip(all_rotation_matrices, all_tanslation_vecotrs):
     #     basler_ir.check_transition(basler_ir_image, kinect_color_image,
     #                                 kinect_color, r_matr, t_vec,
