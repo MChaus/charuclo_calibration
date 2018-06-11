@@ -232,7 +232,7 @@ class CalibratedCamera:
             self.dist_coeff,
             self.rvecs[-1],
             self.tvecs[-1],
-            length=self.square_length
+            length=self.square_length*2
             )
         if show:
             cv2.imshow('Axis', axis_frame[::scale,::scale,:])
@@ -304,7 +304,9 @@ class CalibratedCamera:
             self.rvecs.append(rotation_vector)
             self.tvecs.append(translation_vector)
             rotation_matrix = cv2.Rodrigues(rotation_vector)[0]
-        return rotation_matrix, translation_vector
+            return rotation_matrix, translation_vector
+        else:
+            return retval
 
 
     def draw_bad_markers(self, image, show=True):
@@ -460,10 +462,9 @@ class CalibratedCamera:
 
     def check_transition_chess(self, image_1, image_2, camera_2,
                                rotation_matrix_1, translation_vector_1,
-                               rotation_matrix_2, translation_vector_2,
-                         rotation_matrix_to_camera_2, translation_vector_to_camera_2,
-                         column_number=6, row_number=5, square_width = 100,
-                         show=True, line_width=3, scale=2):
+                               rotation_matrix_to_camera_2, translation_vector_to_camera_2,
+                               column_number=6, row_number=5, square_width = 100,
+                               show=True, line_width=3, scale=2):
         '''
         Function for verifying the correctness of extrinsic parameters.
         Returns images with points on the corners of the squares.

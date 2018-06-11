@@ -14,10 +14,10 @@ import os
 if __name__ == '__main__':
 
     web_cam = CalibratedCamera(
-            squares_x=4,
-            squares_y=6,
-            square_length=60,
-            marker_length=30,
+            squares_x=5,
+            squares_y=8,
+            square_length=70,
+            marker_length=35,
             camera_matrix=np.array([
             [2265.4,   0,   1009.4],
             [0,     2268.7, 811.5],
@@ -29,10 +29,10 @@ if __name__ == '__main__':
 
     # Basler from MatLab.
     basler_ir = CalibratedCamera(
-            squares_x=4,
-            squares_y=6,
-            square_length=60,
-            marker_length=30,
+            squares_x=5,
+            squares_y=8,
+            square_length=70,
+            marker_length=35,
             camera_matrix=np.array([
             [3789.0 ,        0,         0],
             [0,    3793.8,         0],
@@ -44,10 +44,10 @@ if __name__ == '__main__':
 
     # Color Kinect from MatLab.
     kinect_color = CalibratedCamera(
-            squares_x=4,
-            squares_y=6,
-            square_length=60,
-            marker_length=30,
+            squares_x=5,
+            squares_y=8,
+            square_length=70,
+            marker_length=35,
             camera_matrix=np.array([
             [1050.9, 0,  956.0],
             [0,     1050.0, 534.8],
@@ -80,8 +80,8 @@ if __name__ == '__main__':
 
     all_rotation_matrices = []
     all_tanslation_vecotrs = []
-    path_to_ir_basler=r'D:\project\charuco_calibration\images\basler'
-    path_to_color_kinect=r'D:\project\charuco_calibration\images\color_kinect'
+    path_to_ir_basler=r'D:\project-files-BRS\charuco_calibration_prev\images\basler'
+    path_to_color_kinect=r'D:\project-files-BRS\charuco_calibration_prev\images\color_kinect'
     i = -1
     for filename in os.listdir(path_to_ir_basler):
         basler_ir_image_path = os.path.join(path_to_ir_basler, filename)
@@ -101,6 +101,8 @@ if __name__ == '__main__':
             rmatr_basler_color, tvec_basler_color = basler_ir.get_disposition_charuco(basler_ir_image, kinect_color_image, kinect_color)
             all_rotation_matrices.append(rmatr_basler_color)
             all_tanslation_vecotrs.append(tvec_basler_color)
+            basler_ir.draw_markers(basler_ir_image, show=True)
+
     print('Rotation vectors:\n')
     for r_matr in all_rotation_matrices:
         r_vec = cv2.Rodrigues(r_matr)[0]
@@ -118,14 +120,14 @@ if __name__ == '__main__':
             cv2.imshow('Axis',
                        basler_ir.check_calibration_charuco(basler_ir_image,
                                                            show=False,
-                                                           square_width = 60,
-                                                           column_number=4,
-                                                           row_number=6))
+                                                           square_width = 70,
+                                                           column_number=5,
+                                                           row_number=8))
             cv2.waitKey()
 
 
-    path_to_ir_image=r'D:\project\charuco_calibration\images\basler\00000.png'
-    path_to_color_image=r'D:\project\charuco_calibration\images\color_kinect\00000.png'
+    path_to_ir_image=r'D:\project\charuco_calibration\images\basler\00280.png'
+    path_to_color_image=r'D:\project\charuco_calibration\images\color_kinect\00280.png'
 
     basler_ir_image = cv2.imread(path_to_ir_image)
     kinect_color_image = cv2.imread(path_to_color_image)
@@ -138,10 +140,10 @@ if __name__ == '__main__':
         extrinsic_matrix[0:3, 0:3] = r_matr
         extrinsic_matrix[0:3, 3] = t_vec[0:3, 0]
         extrinsic_matrix = LA.inv(extrinsic_matrix)
-        kinect_color.check_transition(kinect_color_image, basler_ir_image,
+        kinect_color.check_transition_chess(kinect_color_image, basler_ir_image,
                                     basler_ir, extrinsic_matrix[0:3, 0:3],
-                                    extrinsic_matrix[0:3, 3].reshape(3, 1), column_number=4,
-                                    row_number=6, square_width = 60,
+                                    extrinsic_matrix[0:3, 3].reshape(3, 1), column_number=5,
+                                    row_number=8, square_width = 60,
                                     show=True, line_width=5, scale=1)
 
 
