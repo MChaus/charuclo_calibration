@@ -50,7 +50,6 @@ if __name__ == '__main__':
                 image = cv2.imread(image_path)
                 if flip:
                     image = cv2.flip(image, 1)
-
                 rmatr, tvec = camera.estimate_board_pose(image)
                 all_rotation_vectors.append(cv2.Rodrigues(rmatr)[0])
                 all_tanslation_vecotrs.append(tvec)
@@ -68,12 +67,12 @@ if __name__ == '__main__':
             square_length=220,
             marker_length=110,
             camera_matrix=np.array([
-            [2265.4,   0,   1009.4],
-            [0,     2268.7, 811.5],
+            [2265.4 * 0.625,   0,   1009.4 * 0.625],
+            [0,     2268.7 * 0.625, 811.5 * 0.625],
             [0,     0,      1]
-            ]),
-            dist_coeff=np.array([[-0.0276, 0.1141, 0.0000871, -0.0002941]]),
-            image_size=(1536, 2048)
+            ]) ,
+            dist_coeff=np.array([[ -0.0276, 0.1141, 0.0000871, -0.0002941]]),
+            image_size=(960, 1280)
             )
 
     web_cam_screen = CalibratedCamera(
@@ -88,6 +87,20 @@ if __name__ == '__main__':
             ]) ,
             dist_coeff=np.array([[ -0.0276, 0.1141, 0.0000871, -0.0002941]]),
             image_size=(960, 1280)
+            )
+
+    web_cam_screen_high = CalibratedCamera(
+            squares_x=4,
+            squares_y=6,
+            square_length=70,
+            marker_length=35,
+            camera_matrix=np.array([
+            [2265.4,   0,   1009.4],
+            [0,     2268.7, 811.5],
+            [0,     0,      1]
+            ]) ,
+            dist_coeff=np.array([[ -0.0276, 0.1141, 0.0000871, -0.0002941]]),
+            image_size=(1536, 2048)
             )
 
     # Basler from MatLab.
@@ -168,15 +181,18 @@ if __name__ == '__main__':
     path_to_basler = r'D:\project-files-BRS\charuco_calibration_prev\images\basler'
     path_to_color_basler = r'D:\project-files-BRS\charuco_calibration_prev\images\color_kinect\color_basler'
     path_to_color_web_cam = r'D:\project-files-BRS\charuco_calibration_prev\images\color_kinect\color_web_cam'
+    path_to_web_cam_screen = r'D:\project-files-BRS\charuco_calibration_prev\images\web_cam\web_cam_screen'
 
     extrinsic_matrix_web_cam_color = get_extrinsics(web_cam_screen, kinect_color_screen, path_to_web_cam_color, path_to_color_web_cam, flip_1=True, flip_2=True)
     extrinsic_matrix_basler_color = get_extrinsics(basler_ir_board, kinect_color_board, path_to_basler, path_to_color_basler, flip_1=True, flip_2=True)
-    extrinsic_matrix_wall_web_cam = wall_disposotion(web_cam_wall, path_to_web_cam_wall, flip=False)
+    extrinsic_matrix_wall_web_cam = wall_disposotion(web_cam_wall, path_to_web_cam_wall, flip=True)
+    extrinsic_matrix_screen_web_cam = wall_disposotion(web_cam_screen, path_to_web_cam_screen, flip=True)
 
 
     extrinsic_matrix_basler_ir = extrinsic_matrix_color_ir @ extrinsic_matrix_basler_color
     extrinsic_matrix_web_cam_ir = extrinsic_matrix_color_ir @ extrinsic_matrix_web_cam_color
     extrinsic_matrix_wall_ir = extrinsic_matrix_web_cam_ir @ extrinsic_matrix_wall_web_cam
+    extrinsic_matrix_screen_ir = extrinsic_matrix_web_cam_ir @ extrinsic_matrix_screen_web_cam
 
     print(extrinsic_matrix_wall_ir)
 
@@ -184,6 +200,7 @@ if __name__ == '__main__':
         'extrinsic_matrix_color_ir' : extrinsic_matrix_color_ir.tolist(),
         'extrinsic_matrix_web_cam_ir' : extrinsic_matrix_web_cam_ir.tolist(),
         'extrinsic_matrix_wall_ir' : extrinsic_matrix_wall_ir.tolist(),
+        'extrinsic_matrix_screen_ir' : extrinsic_matrix_screen_ir.tolist(),
         'extrinsic_matrix_basler_ir' :  extrinsic_matrix_basler_ir.tolist()
     }
 
@@ -191,4 +208,3 @@ if __name__ == '__main__':
     with open('extrinsic_matrices.json', 'w') as _file:
         json.dump(extrinsic_matrices, _file, indent=4, ensure_ascii=False, )
         _file.close()
-        

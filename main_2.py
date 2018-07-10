@@ -71,6 +71,21 @@ if __name__ == '__main__':
             dist_coeff=np.array([[0.038, -0.0388, 0.0010, 0.0004]]),
             image_size=(1080, 1920)
             )
+
+    web_cam_screen_high = CalibratedCamera(
+            squares_x=4,
+            squares_y=6,
+            square_length=70,
+            marker_length=35,
+            camera_matrix=np.array([
+            [2265.4,   0,   1009.4],
+            [0,     2268.7, 811.5],
+            [0,     0,      1]
+            ]) ,
+            dist_coeff=np.array([[ -0.0276, 0.1141, 0.0000871, -0.0002941]]),
+            image_size=(1536, 2048)
+            )
+
     kinect_color_screen = CalibratedCamera(
             squares_x=4,
             squares_y=6,
@@ -172,10 +187,46 @@ if __name__ == '__main__':
             image_path = os.path.join(path, filename)
             check_drawings(camera, image_path, flip, scale)
 
+    def check_markers(camera, path, flip):
+        image = cv2.imread(path)
+        if flip:
+            image = cv2.flip(image, 1)
+            print(path, end=' ')
+        try:
+            rmatr, tvec = camera.estimate_board_pose(image)
+        except:
+            os.remove(path)
+            print("Not detected removed!")
+
+    def check_all_markers(camera, path, flip=False):
+        for filename in os.listdir(path):
+            image_path = os.path.join(path, filename)
+            check_markers(camera, image_path, flip)
+
+    def clean_files(path_1, path_2):
+        for filename in os.listdir(path_1):
+            image_path_1 = os.path.join(path_1, filename)
+            image_path_2 = os.path.join(path_2, filename)
+
+            if not os.path.isfile(image_path_2):
+                os.remove(image_path_1)
+
+        for filename in os.listdir(path_2):
+            image_path_1 = os.path.join(path_1, filename)
+            image_path_2 = os.path.join(path_2, filename)
+
+            if not os.path.isfile(image_path_1):
+                os.remove(image_path_2)
+
     # check_all_drawings(web_cam_wall, r'images\web_cam\web_cam_wall', flip=False, scale=1)
     # check_all_drawings(basler_ir_board, r'images\basler', flip=True, scale=2)
     # check_all_drawings(kinect_color_board, r'images\color_kinect\color_basler', flip=True, scale=2)
-    check_all_drawings(web_cam_screen, r'images\web_cam\web_cam_color', flip=True, scale=2)
     # check_all_drawings(kinect_color_screen, r'images\color_kinect\color_web_cam', flip=True, scale=2)
     # check_drawings(basler_ir_board, r'images\basler\00806.png', flip=True, scale=1)
     # check_all_drawings(kinect_color_screen, r'images\color_kinect\color_web_cam',flip = True, scale=2)
+    check_all_drawings(web_cam_screen, r'images\web_cam\web_cam_color', flip=True, scale=2)
+
+    # check_all_markers(web_cam_wall, r'images\web_cam\web_cam_wall', flip=True)
+    # check_all_markers(kinect_color_screen, r'images\color_kinect\color_web_cam', flip=True)
+    # check_all_markers(web_cam_screen, r'images\web_cam\web_cam_color', flip=True)
+    # clean_files( r'images\web_cam\web_cam_color', r'images\color_kinect\color_web_cam')
